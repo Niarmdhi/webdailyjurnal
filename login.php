@@ -6,7 +6,7 @@ $error_message = "";
 
 // jika sudah login
 if (isset($_SESSION['username'])) {
-    header("Location: admin.php");
+    header("Location: admin_main.php");
     exit;
 }
 
@@ -21,13 +21,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     );
     $stmt->bind_param("ss", $username, $password);
     $stmt->execute();
+    $stmt->store_result();
 
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $data = $result->fetch_assoc();
-        $_SESSION['username'] = $data['username'];
-        header("Location: admin.php");
+    if ($stmt->num_rows > 0) {
+        // Ambil username dari hasil query
+        $stmt->bind_result($db_username);
+        $stmt->fetch();
+        $_SESSION['username'] = $db_username;
+        header("Location: admin_main.php");
         exit;
     } else {
         $error_message = "Username atau password salah!";

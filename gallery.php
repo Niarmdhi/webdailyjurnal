@@ -7,17 +7,14 @@ include "upload_foto.php";
 
 // ====================== INSERT / UPDATE ======================
 if (isset($_POST['simpan'])) {
-    
-    error_log("Article simpan handler triggered");
-    error_log("POST data: " . print_r($_POST, true));
 
     $judul = $_POST['judul'];
-    $isi = $_POST['isi'];
-    $tanggal = date("Y-m-d H:i:s");
-    $username = $_SESSION['username'];
+    $deskripsi = $_POST['deskripsi'];
+    $tanggal_upload = date("Y-m-d H:i:s");
     $gambar = "";
     $nama_gambar = isset($_FILES['gambar']['name']) ? $_FILES['gambar']['name'] : "";
 
+    // Upload gambar baru jika ada
     if ($nama_gambar != "") {
         $upload = upload_foto($_FILES['gambar']);
         if ($upload['status']) {
@@ -40,24 +37,19 @@ if (isset($_POST['simpan'])) {
                 unlink("img/" . $_POST['gambar_lama']);
         }
 
-        $stmt = $koneksi->prepare("UPDATE articel SET judul=?, isi=?, gambar=?, tanggal=?, username=? WHERE id=?");
-        $stmt->bind_param("sssssi", $judul, $isi, $gambar, $tanggal, $username, $id);
+        $stmt = $koneksi->prepare("UPDATE gallery SET judul=?, deskripsi=?, gambar=?, tanggal_upload=? WHERE id_gallery=?");
+        $stmt->bind_param("ssssi", $judul, $deskripsi, $gambar, $tanggal_upload, $id);
         $simpan = $stmt->execute();
 
     } else {
         // ========== INSERT BARU ==========
-        $stmt = $koneksi->prepare("INSERT INTO articel (judul, isi, gambar, tanggal, username) VALUES (?,?,?,?,?)");
-        $stmt->bind_param("sssss", $judul, $isi, $gambar, $tanggal, $username);
+        $stmt = $koneksi->prepare("INSERT INTO gallery (judul, deskripsi, gambar, tanggal_upload) VALUES (?,?,?,?)");
+        $stmt->bind_param("ssss", $judul, $deskripsi, $gambar, $tanggal_upload);
         $simpan = $stmt->execute();
     }
 
-    if ($simpan) {
-        echo "<script>alert('Data berhasil disimpan'); document.location='admin_main.php?page=article';</script>";
-        exit;
-    } else {
-        echo "<script>alert('Error: " . $stmt->error . "'); history.back();</script>";
-        exit;
-    }
+    echo "<script>alert('Data berhasil disimpan'); document.location='admin_main.php?page=gallery';</script>";
+    exit;
 }
 
 
@@ -71,26 +63,21 @@ if (isset($_POST['hapus'])) {
         unlink("img/" . $gambar);
     }
 
-    $stmt = $koneksi->prepare("DELETE FROM articel WHERE id=?");
+    $stmt = $koneksi->prepare("DELETE FROM gallery WHERE id_gallery=?");
     $stmt->bind_param("i", $id);
     $hapus = $stmt->execute();
 
-    if ($hapus) {
-        echo "<script>alert('Data berhasil dihapus'); document.location='admin_main.php?page=article';</script>";
-        exit;
-    } else {
-        echo "<script>alert('Error: " . $stmt->error . "'); history.back();</script>";
-        exit;
-    }
+    echo "<script>alert('Data berhasil dihapus'); document.location='admin_main.php?page=gallery';</script>";
+    exit;
 }
 ?>
 
 <div class="container">
     <button type="button" class="btn btn-secondary mb-2" data-bs-toggle="modal" data-bs-target="#modalTambah">
-        <i class="bi bi-plus-lg"></i> Tambah Article
+        <i class="bi bi-plus-lg"></i> Tambah Gallery
     </button>
     <div class="row">
-    <div class="table-responsive" id="article_data">
+    <div class="table-responsive" id="gallery_data">
 
     </div>
     
@@ -101,7 +88,7 @@ if (isset($_POST['hapus'])) {
 
                     <form method="post" enctype="multipart/form-data">
                         <div class="modal-header">
-                            <h5>Tambah Article</h5>
+                            <h5>Tambah Gallery</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
@@ -113,13 +100,13 @@ if (isset($_POST['hapus'])) {
                             </div>
 
                             <div class="mb-3">
-                                <label>Isi</label>
-                                <textarea class="form-control" name="isi" required></textarea>
+                                <label>Deskripsi</label>
+                                <textarea class="form-control" name="deskripsi" required></textarea>
                             </div>
 
                             <div class="mb-3">
                                 <label>Gambar</label>
-                                <input type="file" class="form-control" name="gambar">
+                                <input type="file" class="form-control" name="gambar" required>
                             </div>
 
                         </div>
@@ -143,26 +130,19 @@ $(document).ready(function(){
     load_data();
     function load_data(hlm){
         $.ajax({
-            url : "article_data.php",
+            url : "gallery_data.php",
             method : "POST",
             data : {
 					            hlm: hlm
 				           },
             success : function(data){
-                    $('#article_data').html(data);
+                    $('#gallery_data').html(data);
             }
         })
     }
     $(document).on('click', '.halaman', function(){
-        var hlm = $(this).attr("id");
-        load_data(hlm);
-    });
-    
-    // Handle form submit dari article_data.php (yang di-load via AJAX)
-    $(document).on('submit', '#article_data form', function(e){
-        // Biarkan form submit normal, karena handler PHP ada di article.php
-        // Form akan submit ke halaman yang sama (article.php via admin_main.php)
-        return true;
-    });
+    var hlm = $(this).attr("id");
+    load_data(hlm);
+}); 
 });
 </script>

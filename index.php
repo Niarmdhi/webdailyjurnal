@@ -222,7 +222,7 @@ include "koneksi.php";
       <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
         <ul class="navbar-nav mb-2 mb-lg-0 pe-0">
           <li class="nav-item"><a class="nav-link" href="#hero">HOME</a></li>
-          <li class="nav-item"><a class="nav-link" href="#articel">ARTICEL</a></li>
+          <li class="nav-item"><a class="nav-link" href="#article">ARTICEL</a></li>
           <li class="nav-item"><a class="nav-link" href="#gallery">GALLERY</a></li>
           <li class="nav-item"><a class="nav-link" href="#schedule">SCHEDULE</a></li>
           <li class="nav-item"><a class="nav-link" href="#profile">PROFILE</a></li>
@@ -314,41 +314,44 @@ include "koneksi.php";
 </section>
 <!-- article end -->
 
-
   <!-- gallery begin -->
   <section id="gallery" class="text-center p-5 bg-primary-subtle">
-    <div class="container">
-      <h1 class="fw-bold display-4 pb-3">Gallery</h1>
-      <div id="carouselExample" class="carousel slide">
-        <div class="carousel-inner">
-          <div class="carousel-item active">
-            <img src="fto2.jpg" class="d-block w-50 mx-auto" alt="foto 1">
-          </div>
-          <div class="carousel-item">
-            <img src="foto.jpg" class="d-block w-50 mx-auto" alt="foto 2">
-          </div>
-          <div class="carousel-item">
-            <img src="foto2.jpg" class="d-block w-50 mx-auto" alt="foto 3">
-          </div>
-          <div class="carousel-item">
-            <img src="ftooo3.jpg" class="d-block w-50 mx-auto" alt="foto 4">
-          </div>
-          <div class="carousel-item">
-            <img src="ftooo4.jpg" class="d-block w-50 mx-auto" alt="foto 5">
+  <div class="container">
+    <h1 class="fw-bold display-4 pb-3">Gallery</h1>
+
+    <div class="row justify-content-center g-4">
+      <?php
+      $sql_gallery = "SELECT * FROM gallery ORDER BY id_gallery DESC";
+      $gallery = $koneksi->query($sql_gallery);
+      
+      if ($gallery && $gallery->num_rows > 0) {
+        while ($g = mysqli_fetch_assoc($gallery)) { ?>
+
+        <div class="col-6 col-md-3">
+          <div class="card shadow-sm h-100">
+            <img 
+              src="img/<?= $g['gambar']; ?>" 
+              class="card-img-top"
+              style="height:180px; object-fit:cover;"
+              alt="<?= $g['judul']; ?>"
+            >
+            <div class="card-body">
+              <h6 class="fw-bold"><?= $g['judul']; ?></h6>
+              <p class="small"><?= $g['deskripsi']; ?></p>
+            </div>
           </div>
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Next</span>
-        </button>
-      </div>
+      <?php 
+        }
+      } else {
+        echo "<p class='text-muted'>Belum ada galeri yang ditambahkan.</p>";
+      }
+      ?>
     </div>
-  </section>
-  <!-- gallery end -->
+
+  </div>
+</section>
+<!-- gallery end -->
 
 <!-- SCHEDULE -->
   <section id="schedule" class="p-5">
@@ -482,7 +485,7 @@ include "koneksi.php";
       <div class="row align-items-center justify-content-center g-4">
         <!-- Foto -->
         <div class="col-md-4 text-center">
-          <img src="fotonia.jpg" alt="Foto Nia Ramadhani" class="profile-img">
+          <img src="img/fotonia.jpg" alt="Foto Nia Ramadhani" class="profile-img">
         </div>
 
         <!-- Data -->

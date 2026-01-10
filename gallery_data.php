@@ -1,4 +1,5 @@
 <?php
+// Handler untuk form submit dari gallery_data.php (yang di-load via AJAX)
 if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -9,18 +10,18 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
     // Proses simpan
     if (isset($_POST['simpan'])) {
         $judul = $_POST['judul'];
-        $isi = $_POST['isi'];
-        $tanggal = date("Y-m-d H:i:s");
-        $username = $_SESSION['username'];
+        $deskripsi = $_POST['deskripsi'];
+        $tanggal_upload = date("Y-m-d H:i:s");
         $gambar = "";
         $nama_gambar = isset($_FILES['gambar']['name']) ? $_FILES['gambar']['name'] : "";
 
+        // Upload gambar baru jika ada
         if ($nama_gambar != "") {
             $upload = upload_foto($_FILES['gambar']);
             if ($upload['status']) {
                 $gambar = $upload['message'];
             } else {
-                echo "<script>alert('" . $upload['message'] . "'); window.location.href='admin_main.php?page=article_data';</script>";
+                echo "<script>alert('" . $upload['message'] . "'); window.location.href='admin_main.php?page=gallery_data';</script>";
                 exit;
             }
         }
@@ -34,21 +35,21 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                 if (file_exists("img/" . $_POST['gambar_lama']))
                     unlink("img/" . $_POST['gambar_lama']);
             }
-            $stmt = $koneksi->prepare("UPDATE articel SET judul=?, isi=?, gambar=?, tanggal=?, username=? WHERE id=?");
-            $stmt->bind_param("sssssi", $judul, $isi, $gambar, $tanggal, $username, $id);
+            $stmt = $koneksi->prepare("UPDATE gallery SET judul=?, deskripsi=?, gambar=?, tanggal_upload=? WHERE id_gallery=?");
+            $stmt->bind_param("ssssi", $judul, $deskripsi, $gambar, $tanggal_upload, $id);
             $simpan = $stmt->execute();
         } else {
             // ========== INSERT BARU ==========
-            $stmt = $koneksi->prepare("INSERT INTO articel (judul, isi, gambar, tanggal, username) VALUES (?,?,?,?,?)");
-            $stmt->bind_param("sssss", $judul, $isi, $gambar, $tanggal, $username);
+            $stmt = $koneksi->prepare("INSERT INTO gallery (judul, deskripsi, gambar, tanggal_upload) VALUES (?,?,?,?)");
+            $stmt->bind_param("ssss", $judul, $deskripsi, $gambar, $tanggal_upload);
             $simpan = $stmt->execute();
         }
 
         if ($simpan) {
-            echo "<script>alert('Data berhasil disimpan'); window.location.href='admin_main.php?page=article_data';</script>";
+            echo "<script>alert('Data berhasil disimpan'); window.location.href='admin_main.php?page=gallery_data';</script>";
             exit;
         } else {
-            echo "<script>alert('Error: " . $stmt->error . "'); window.location.href='admin_main.php?page=article_data';</script>";
+            echo "<script>alert('Error: " . $stmt->error . "'); window.location.href='admin_main.php?page=gallery_data';</script>";
             exit;
         }
     }
@@ -62,15 +63,15 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
             unlink("img/" . $gambar);
         }
 
-        $stmt = $koneksi->prepare("DELETE FROM articel WHERE id=?");
+        $stmt = $koneksi->prepare("DELETE FROM gallery WHERE id_gallery=?");
         $stmt->bind_param("i", $id);
         $hapus = $stmt->execute();
 
         if ($hapus) {
-            echo "<script>alert('Data berhasil dihapus'); window.location.href='admin_main.php?page=article_data';</script>";
+            echo "<script>alert('Data berhasil dihapus'); window.location.href='admin_main.php?page=gallery_data';</script>";
             exit;
         } else {
-            echo "<script>alert('Error: " . $stmt->error . "'); window.location.href='admin_main.php?page=article_data';</script>";
+            echo "<script>alert('Error: " . $stmt->error . "'); window.location.href='admin_main.php?page=gallery_data';</script>";
             exit;
         }
     }
@@ -78,7 +79,7 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
 ?>
 
 <button type="button" class="btn btn-secondary mb-2" data-bs-toggle="modal" data-bs-target="#modalTambah">
-    <i class="bi bi-plus-lg"></i> Tambah Article
+    <i class="bi bi-plus-lg"></i> Tambah Gallery
 </button>
 
 <!-- MODAL TAMBAH -->
@@ -87,7 +88,7 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
         <div class="modal-content">
             <form method="post" enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h5>Tambah Article</h5>
+                    <h5>Tambah Gallery</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -96,12 +97,12 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                         <input type="text" class="form-control" name="judul" required>
                     </div>
                     <div class="mb-3">
-                        <label>Isi</label>
-                        <textarea class="form-control" name="isi" required></textarea>
+                        <label>Deskripsi</label>
+                        <textarea class="form-control" name="deskripsi" required></textarea>
                     </div>
                     <div class="mb-3">
                         <label>Gambar</label>
-                        <input type="file" class="form-control" name="gambar">
+                        <input type="file" class="form-control" name="gambar" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -118,7 +119,7 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                     <tr>
                         <th>No</th>
                         <th class="w-25">Judul</th>
-                        <th class="w-75">Isi</th>
+                        <th class="w-50">Deskripsi</th>
                         <th class="w-25">Gambar</th>
                         <th class="w-25">Aksi</th>
                     </tr>
@@ -126,26 +127,26 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                 <tbody>
                     <?php
                     include("koneksi.php");
+                    // Support both POST (AJAX) and GET (direct access) for pagination
                     $hlm = (isset($_POST['hlm'])) ? $_POST['hlm'] : ((isset($_GET['hlm'])) ? $_GET['hlm'] : 1);
-                    $limit = 3;
+                    $limit = 4;
                     $limit_start = ($hlm - 1) * $limit;
                     $no = $limit_start + 1;
 
-                    $sql = "SELECT * FROM articel ORDER BY tanggal DESC LIMIT $limit_start, $limit";
-                    $hasil = $koneksi->query($sql); // Perbaikan 1: pakai $koneksi
+                    $sql = "SELECT * FROM gallery ORDER BY tanggal_upload DESC LIMIT $limit_start, $limit";
+                    $hasil = $koneksi->query($sql);
 
-                    while ($row = $hasil->fetch_assoc()) { // Perbaikan 2: pakai $hasil->fetch_assoc()
+                    while ($row = $hasil->fetch_assoc()) {
                     ?>
                         <tr>
                             <td><?= $no++ ?></td>
 
                             <td>
                                 <strong><?= $row["judul"] ?></strong><br>
-                                pada : <?= $row["tanggal"] ?><br>
-                                oleh : <?= $row["username"] ?>
+                                pada : <?= $row["tanggal_upload"] ?>
                             </td>
 
-                            <td><?= nl2br($row["isi"]) ?></td>
+                            <td><?= nl2br($row["deskripsi"]) ?></td>
 
                             <td>
                                 <?php if ($row["gambar"] != "" && file_exists("img/" . $row["gambar"])) { ?>
@@ -158,32 +159,32 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                             <td>
                                 <!-- Tombol Edit -->
                                 <a href="#" class="badge rounded-pill text-bg-success"
-                                   data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row["id"] ?>">
+                                   data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row["id_gallery"] ?>">
                                    <i class="bi bi-pencil"></i>
                                 </a>
 
                                 <!-- Tombol Hapus -->
                                 <a href="#" class="badge rounded-pill text-bg-danger"
-                                   data-bs-toggle="modal" data-bs-target="#modalHapus<?= $row["id"] ?>">
+                                   data-bs-toggle="modal" data-bs-target="#modalHapus<?= $row["id_gallery"] ?>">
                                    <i class="bi bi-x-circle"></i>
                                 </a>
                             </td>
                         </tr>
 
                         <!-- MODAL EDIT -->
-                        <div class="modal fade" id="modalEdit<?= $row["id"] ?>" tabindex="-1">
+                        <div class="modal fade" id="modalEdit<?= $row["id_gallery"] ?>" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
 
                                     <form method="post" enctype="multipart/form-data">
                                         <div class="modal-header">
-                                            <h5>Edit Article</h5>
+                                            <h5>Edit Gallery</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
 
                                         <div class="modal-body">
 
-                                            <input type="hidden" name="id" value="<?= $row["id"] ?>">
+                                            <input type="hidden" name="id" value="<?= $row["id_gallery"] ?>">
 
                                             <div class="mb-3">
                                                 <label>Judul</label>
@@ -192,8 +193,8 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                                             </div>
 
                                             <div class="mb-3">
-                                                <label>Isi</label>
-                                                <textarea class="form-control" name="isi" required><?= $row["isi"] ?></textarea>
+                                                <label>Deskripsi</label>
+                                                <textarea class="form-control" name="deskripsi" required><?= $row["deskripsi"] ?></textarea>
                                             </div>
 
                                             <div class="mb-3">
@@ -221,7 +222,7 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
                         </div>
 
                         <!-- MODAL HAPUS -->
-                        <div class="modal fade" id="modalHapus<?= $row["id"] ?>" tabindex="-1">
+                        <div class="modal fade" id="modalHapus<?= $row["id_gallery"] ?>" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
 
@@ -233,7 +234,7 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
 
                                         <div class="modal-body">
                                             Yakin hapus "<b><?= $row["judul"] ?></b>" ?
-                                            <input type="hidden" name="id" value="<?= $row["id"] ?>">
+                                            <input type="hidden" name="id" value="<?= $row["id_gallery"] ?>">
                                             <input type="hidden" name="gambar" value="<?= $row["gambar"] ?>">
                                         </div>
 
@@ -254,12 +255,12 @@ if ((isset($_POST['simpan']) || isset($_POST['hapus'])) && !isset($_POST['hlm'])
             </table>
 
 <?php
-$sql1 = "SELECT * FROM articel";
+$sql1 = "SELECT * FROM gallery";
 $hasil1 = $koneksi->query($sql1);
 $total_records = $hasil1->num_rows;
 ?>
 
-<p>Total article : <?= $total_records ?></p>
+<p>Total gallery : <?= $total_records ?></p>
 
 <nav class="mb-2">
 <ul class="pagination justify-content-end">
@@ -285,12 +286,13 @@ if ($hlm < $jumlah_page) {
 </nav>
 
 <script>
-if (window.location.href.indexOf('article_data') > -1 || window.location.href.indexOf('page=article_data') > -1) {
+// Support pagination when accessed directly (not via AJAX from gallery.php)
+if (window.location.href.indexOf('gallery_data') > -1 || window.location.href.indexOf('page=gallery_data') > -1) {
     $(document).ready(function(){
         $(document).on('click', '.halaman', function(e){
             e.preventDefault();
             var hlm = $(this).attr("id");
-            window.location.href = 'admin_main.php?page=article_data&hlm=' + hlm;
+            window.location.href = 'admin_main.php?page=gallery_data&hlm=' + hlm;
         });
     });
 }
